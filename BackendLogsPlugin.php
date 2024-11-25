@@ -1,7 +1,5 @@
 <?php
 
-defined('BELOGS_DIRECTORY') or define('BELOGS_DIRECTORY', dirname(__FILE__));
-
 /**
  * @package BackendLogs
  * @copyright Copyright 2024, Christos Sidiropoulos
@@ -9,70 +7,48 @@ defined('BELOGS_DIRECTORY') or define('BELOGS_DIRECTORY', dirname(__FILE__));
  */
 class BackendLogsPlugin extends Omeka_Plugin_AbstractPlugin
 {
-    // Define hooks and filters used by the plugin
-    protected $_hooks = array(
-        // 'define_routes',    // Define custom routes for our plugin
-        'admin_head',       // Hook to include custom styles/scripts in admin
-        'config_form',      // Hook to include the config form
-        // 'admin_dashboard',  // Hook to display content on admin dashboard
-    );
+    protected $_hooks = [
+        'install',
+        'uninstall',
+        'config',
+        'config_form',
+    ];
+
+    protected $_options = [
+        'template_option'=>'option_value'
+    ];
 
     /**
-     * @var array Filters for the plugin.
+     *  Hooks in the proccess of installing the plugin.
+     *  Here we can set options or create db tables or more.
      */
-    // protected $_filters = array('admin_navigation_main');
-
-    /**
-     * @var array Options and their default values.
-     */
-    protected $_options = array();
-
-    /**
-     * Hook to define custom routes.
-    */
-    public function hookDefineRoutes($args): void
+    public function hookInstall(): void
     {
-        $router = $args['router'];
-        $router->addRoute(
-            'backend_logs',
-            new Zend_Controller_Router_Route(
-                'backend-logs',
-                array(
-                    'module' => 'default',
-                    'controller' => 'backend-logs',
-                    'action' => 'index',
-                )
-            )
-        );
+        // ...
     }
 
+    /**
+     *  Hooks in the proccess of uninstalling the plugin.
+     *  Here we can undo what we initialized in hookInstall()
+     */
+    public function hookUninstall(): void
+    {
+        // ...
+    }
 
+    /**
+     * Display the configuration form.
+     */
     public function hookConfigForm(): void
     {
-        include 'config_form.php';
-        // require dirname(__FILE__) . '/config_form.php';
+        include 'views/admin/config-form.php';
     }
 
     /**
-     * Add navigation link.
+     * Process the configuration form submission.
      */
-    public function filterAdminNavigationMain($nav)
+    public function hookConfig($args): void
     {
-        $nav[] = array(
-            'label' => __('belog'),
-            'uri' => url('belog'),
-            'resource' => 'BackendLog_Index',
-            // 'uri' => url('index'),
-            'privilege' => 'index'
-        );
-        return $nav;
-    }
 
-    /**
-     * Hook to add any necessary admin head scripts or styles.
-    */
-    public function hookAdminHead($args): void
-    {
-        // Add any custom CSS or JS here (optional)
     }
 }
