@@ -34,6 +34,7 @@ class BackendLogsPlugin extends Omeka_Plugin_AbstractPlugin
     {
         // Add default values to plugin options as 'logPaths' array:
         set_option('logPaths', json_encode($this->_options['logPaths']));
+        set_option('belogs_rolesACL', json_encode($this->generateRolesArray()));
     }
 
     /**
@@ -43,6 +44,7 @@ class BackendLogsPlugin extends Omeka_Plugin_AbstractPlugin
     {
         // Remove default plugin options:
         delete_option('logPaths');
+        delete_option('belogs_rolesACL');
     }
 
     /**
@@ -51,6 +53,17 @@ class BackendLogsPlugin extends Omeka_Plugin_AbstractPlugin
     public function hookConfigForm(): void
     {
         include 'views/admin/config-form.php';
+
+
+        $array = explode(",",get_option("belogs_rolesACL"));
+
+        debug("test: " . implode($array));
+
+        $keysWithTrue = array_keys(array_filter($array, function ($value) {
+            return $value === true;
+        }));
+
+        debug("done: " . implode(";",array_values($keysWithTrue)));
     }
 
     /**
@@ -58,11 +71,19 @@ class BackendLogsPlugin extends Omeka_Plugin_AbstractPlugin
      */
     public function hookConfig($args): void
     {
+        // Set log paths:
         $logPaths = json_decode(get_option('logPaths'), true);
         foreach ($logPaths as $option => $path) {
             $logPaths[$option] = trim($args['post'][$option]);
         }
         set_option('logPaths', json_encode($logPaths));
+
+        // Set ACL:
+        $rolesArr = $this->generateRolesArray();
+        foreach($args['post']['belogs-rolesACL'] as $option) {
+            $rolesArr[$option] = true;
+        }
+        set_option("belogs_rolesACL", json_encode($rolesArr));
     }
 
     /**
@@ -75,6 +96,8 @@ class BackendLogsPlugin extends Omeka_Plugin_AbstractPlugin
         $acl = $args['acl']; // get the Zend_Acl
 
         $acl->addResource('BackendLogs_Index');
+
+
 
         $acl->allow(array('super', 'admin'), array('BackendLogs_Index'));
         $acl->deny(null, array('BackendLogs_Index'));
@@ -95,5 +118,14 @@ class BackendLogsPlugin extends Omeka_Plugin_AbstractPlugin
             'privilege' => 'index'
         );
         return $nav;
+    }
+
+    private function generateRolesArray(): array {
+        // Retrieve roles
+        $userRoles = get_user_roles();
+        unset($userRoles['super']); // Exclude Super User role
+        asort($userRoles);  // Sort roles alphabetically by their labels for consistent display
+
+        return array_fill_keys(array_keys($userRoles), false);
     }
 }
